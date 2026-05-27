@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
-namespace MaxMessenger\Uploader\Contracts;
+namespace MaxMessenger\Uploader\Contract;
 
 use Closure;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequest\BodyInterface;
 
+/**
+ * Интерфейс для реализации провайдеров контента.
+ *
+ * Полное описание читайте в документации {@link ../../docs/ContentInterface.md}.
+ */
 interface ContentInterface
 {
     /**

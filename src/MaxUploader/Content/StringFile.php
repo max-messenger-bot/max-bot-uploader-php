@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader\MaxUploader\Content;
 
 use Closure;
-use MaxMessenger\Uploader\Contracts\ContentInterface;
-use MaxMessenger\Uploader\Exceptions\StreamException;
+use MaxMessenger\Uploader\Contract\ContentInterface;
+use MaxMessenger\Uploader\Exception\StreamException;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequest\BodyInterface;
 use Mj4444\SimpleHttpClient\HttpRequest\Body\StringStreamBody;
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader\HttpClient;
 
 use Closure;
-use MaxMessenger\Uploader\Contracts\ContentInterface;
-use MaxMessenger\Uploader\Exceptions\UnknownResponseErrorException;
+use MaxMessenger\Uploader\Contract\ContentInterface;
+use MaxMessenger\Uploader\Exception\UnknownResponseErrorException;
 use MaxMessenger\Uploader\MaxUploader\DTO\ResumableUploadInfo;
 use Mj4444\SimpleHttpClient\Contracts\HttpClientInterface;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequest\FileInterface;
@@ -120,6 +120,10 @@ final readonly class MaxUploadHttpClient
 
         if (!$json) {
             return $response->getBody();
+        }
+
+        if ($response->getHttpCode() === 201) {
+            return [];
         }
 
         $responseData = $response->getData();

@@ -1,12 +1,12 @@
 # Max Uploader For PHP
 
-<img src="docs/Images/bot-icon.webp" align="left">
+<img src="docs/images/bot-icon.webp" align="left">
 
 Этот пакет предназначен для загрузки файлов на сервера для Max API в полностью объектно-ориентированном формате.<br>
 **Multipart upload** и **Resumable upload** методы.<br>
 Полный контроль над загрузкой.
 
-**Актуальность:** 15 апреля 2026 г.
+**Актуальность:** 27 мая 2026 г.
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
@@ -32,7 +32,7 @@ $apiClient->sendMessageToUser(12345678, $message);
 - Возможность вести логи, следить за происходящими процессами, следить за прогрессом загрузки.
 - Это полностью объектно-ориентированный код без array shapes (object-like arrays).
 - Для загрузки файлов не требуется изучение официального API.
-- В большинстве случаев для понимания работы, Вам достаточно будет посмотреть [примеры кода](./docs/Examples/README.md).
+- В большинстве случаев для понимания работы, Вам достаточно будет посмотреть [примеры кода](docs/examples/README.md).
 - Входные и выходные данные валидируются.
 - Весь функционал разбит на слои, каждый слой может быть частично или полностью заменён Вашей реализацией.
 
@@ -61,15 +61,15 @@ composer require max-messenger-bot/max-uploader-php
 
 ### Зависимости
 
-- `max-messenger-bot/max-bot-api-php` ^0.1|^0.2
+- `max-messenger-bot/max-bot-api-php` ^0.3
 - `mj4444/simple-http-client` ^0.2 — HTTP-клиент для выполнения запросов
 
 ## Примеры
 
-Больше примеров смотрите в документации в разделе [примеры](docs/Examples/README.md).
+Больше примеров смотрите в документации в разделе [примеры](docs/examples/README.md).
 
 ## Документация
 
-- [Примеры Multipart-загрузки](docs/Examples/MaxSimpleUploader.md)
-- [Примеры Resumable-загрузки](docs/Examples/MaxUploader.md)
+- [Примеры Multipart-загрузки](docs/examples/MaxSimpleUploader.md)
+- [Примеры Resumable-загрузки](docs/examples/MaxUploader.md)
 - [Интерфейс ContentInterface](docs/ContentInterface.md)

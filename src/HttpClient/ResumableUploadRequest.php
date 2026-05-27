@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader\HttpClient;
 
 use Closure;
-use MaxMessenger\Uploader\Contracts\ContentInterface;
-use MaxMessenger\Uploader\Exceptions\StreamLogicException;
+use MaxMessenger\Uploader\Contract\ContentInterface;
+use MaxMessenger\Uploader\Exception\StreamLogicException;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequest\BodyInterface;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequestExInterface;
 use Mj4444\SimpleHttpClient\HttpRequest\HttpMethod;

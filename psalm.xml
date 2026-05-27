@@ -21,8 +21,9 @@
     <issueHandlers>
         <PossiblyUnusedMethod>
             <errorLevel type="suppress">
-                <directory name="src/Exceptions" />
+                <directory name="src/Exception" />
                 <directory name="src/MaxSimpleUploader" />
+                <file name="src/MaxUploader.php" />
             </errorLevel>
         </PossiblyUnusedMethod>
         <PossiblyUnusedProperty>

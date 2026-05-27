@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MaxMessenger\Uploader\MaxUploader\Content;
 
-use MaxMessenger\Uploader\Exceptions\StreamException;
+use MaxMessenger\Uploader\Exception\StreamException;
 
 final readonly class File extends BaseStream
 {
@@ -22,6 +22,6 @@ final readonly class File extends BaseStream
             throw new StreamException('Unable to open file: ' . $this->fileName);
         }
 
-        parent::__construct($resource, $postName ?? $fileName);
+        parent::__construct($resource, $postName ?? $this->fileName);
     }
 }

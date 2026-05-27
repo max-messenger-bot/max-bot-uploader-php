@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MaxMessenger\Uploader\Exceptions;
+namespace MaxMessenger\Uploader\Exception;
 
-use MaxMessenger\Bot\Exceptions\MaxApiException;
+use MaxMessenger\Bot\Exception\MaxApiException;
 
 /**
  * Base class for uploader exceptions.

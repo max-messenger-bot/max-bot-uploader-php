@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MaxMessenger\Uploader\Exceptions;
+namespace MaxMessenger\Uploader\Exception;
 
-use MaxMessenger\Bot\Exceptions\MaxApiLogicException;
+use MaxMessenger\Bot\Exception\MaxApiLogicException;
 
 /**
  * Stream logic exception.

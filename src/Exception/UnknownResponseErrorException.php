@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MaxMessenger\Uploader\Exceptions;
+namespace MaxMessenger\Uploader\Exception;
 
 /**
  * Unknown response error.

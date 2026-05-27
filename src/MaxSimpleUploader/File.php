@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MaxMessenger\Uploader\MaxSimpleUploader;
 
-use MaxMessenger\Uploader\Exceptions\SimpleUploaderException;
+use MaxMessenger\Uploader\Exception\SimpleUploaderException;
 use Mj4444\SimpleHttpClient\Contracts\HttpRequest\FileInterface;
 
 final readonly class File implements FileInterface

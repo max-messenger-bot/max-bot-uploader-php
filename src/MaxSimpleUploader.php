@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader;
 
 use MaxMessenger\Bot\MaxApiClient;
-use MaxMessenger\Bot\Models\Enums\UploadType;
-use MaxMessenger\Bot\Models\Responses\PhotoTokens;
-use MaxMessenger\Bot\Models\Responses\UploadedFile;
-use MaxMessenger\Uploader\Exceptions\UnknownResponseErrorException;
-use MaxMessenger\Uploader\Exceptions\UnknownResponseFormatException;
+use MaxMessenger\Bot\Model\Enum\UploadType;
+use MaxMessenger\Bot\Model\Response\PhotoTokens;
+use MaxMessenger\Bot\Model\Response\UploadedFile;
+use MaxMessenger\Uploader\Exception\UnknownResponseErrorException;
+use MaxMessenger\Uploader\Exception\UnknownResponseFormatException;
 use MaxMessenger\Uploader\HttpClient\MaxUploadHttpClient;
 use MaxMessenger\Uploader\MaxSimpleUploader\File;
 use MaxMessenger\Uploader\MaxSimpleUploader\StringFile;
