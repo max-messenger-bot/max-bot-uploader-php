@@ -14,9 +14,8 @@ final readonly class StringFile implements StringFileInterface
      */
     public function __construct(
         public string $data,
-        public string $postName
-    ) {
-    }
+        public string $postName,
+    ) {}
 
     public function getData(): string
     {

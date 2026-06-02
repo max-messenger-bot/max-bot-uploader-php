@@ -27,7 +27,7 @@ abstract readonly class BaseStream implements ContentInterface
      */
     public function __construct(
         public mixed $resource,
-        public string $postName
+        public string $postName,
     ) {
         /** @psalm-suppress DocblockTypeContradiction */
         if (!is_resource($this->resource) || !$this->isSeekable()) {

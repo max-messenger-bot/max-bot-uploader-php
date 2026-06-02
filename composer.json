@@ -1,5 +1,5 @@
 {
-    "name": "max-messenger-bot/max-uploader-php",
+    "name": "max-messenger-bot/max-bot-uploader-php",
     "description": "Max messenger Uploader",
     "keywords": [
         "max",
@@ -33,10 +33,15 @@
     "require-dev": {
         "codeception/codeception": "^5.3",
         "codeception/module-asserts": "*",
-        "squizlabs/php_codesniffer": "^4.0",
+        "friendsofphp/php-cs-fixer": "^3.95",
         "vimeo/psalm": "^6.16"
     },
     "config": {
         "sort-packages": true
+    },
+    "scripts": {
+        "cs": "php-cs-fixer check --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "psalm": "psalm"
     }
 }

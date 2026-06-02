@@ -13,6 +13,5 @@ final class ResumableUploadInfo
     public function __construct(
         public int $lastLoadedByte,
         public int $totalBytes,
-    ) {
-    }
+    ) {}
 }

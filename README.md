@@ -6,7 +6,7 @@
 **Multipart upload** и **Resumable upload** методы.<br>
 Полный контроль над загрузкой.
 
-**Актуальность:** 27 мая 2026 г.
+**Актуальность:** 2 июня 2026 г.
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
@@ -52,7 +52,7 @@ the documentation into English, the in-code documentation is presented in Russia
 ## Установка
 
 ```bash
-composer require max-messenger-bot/max-uploader-php
+composer require max-messenger-bot/max-bot-uploader-php
 ```
 
 ### Требования

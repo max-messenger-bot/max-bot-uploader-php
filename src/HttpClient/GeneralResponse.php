@@ -30,9 +30,8 @@ final readonly class GeneralResponse implements HttpResponseInterface
         public string $url,
         public ?string $contentType,
         public string $body,
-        public int $expectedHttpCode = 200
-    ) {
-    }
+        public int $expectedHttpCode = 200,
+    ) {}
 
     public function checkContentType(string|array|null $expectedContentType = null): void
     {
@@ -45,7 +44,7 @@ final readonly class GeneralResponse implements HttpResponseInterface
     public function checkHttpCode(int|array $allowedCode = 200): void
     {
         if ($this->getHttpCode() !== $this->expectedHttpCode) {
-            $error = Error::newFromData((array)$this->getData());
+            $error = Error::newFromData((array) $this->getData());
 
             /** @psalm-var HttpResponseInterface $this Psalm bug */
             $error->isValid()

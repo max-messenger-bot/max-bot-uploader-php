@@ -27,9 +27,8 @@ final readonly class SimpleUploadRequest extends BaseRequest implements HttpRequ
         private FileInterface|StringFileInterface $file,
         private int $lowSpeedLimit,
         private int $lowSpeedTime,
-        private bool $isJsonResponse
-    ) {
-    }
+        private bool $isJsonResponse,
+    ) {}
 
     public function getBody(): MultipartFormBody
     {

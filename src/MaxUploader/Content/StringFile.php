@@ -20,9 +20,8 @@ final readonly class StringFile implements ContentInterface
      */
     public function __construct(
         public string $content,
-        public string $postName
-    ) {
-    }
+        public string $postName,
+    ) {}
 
     public function getBody(int $offset, int $length, ?Closure $progressCallback): BodyInterface
     {

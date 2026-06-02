@@ -12,7 +12,7 @@ namespace MaxMessenger\Uploader\Exception;
 final class UnknownResponseErrorException extends UploaderException
 {
     public function __construct(
-        public readonly string $data
+        public readonly string $data,
     ) {
         parent::__construct('Unknown data error.');
     }
