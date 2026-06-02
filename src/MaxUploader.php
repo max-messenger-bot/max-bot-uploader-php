@@ -56,9 +56,8 @@ final class MaxUploader
     private ?UploadEndpoint $lastMeta = null;
 
     public function __construct(
-        private readonly MaxApiClient $apiClient
-    ) {
-    }
+        private readonly MaxApiClient $apiClient,
+    ) {}
 
     public function getLastMeta(): ?UploadEndpoint
     {
@@ -154,7 +153,7 @@ final class MaxUploader
 
         return $this->uploadWithAttempts(
             fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Audio, $meta, false),
-            $meta
+            $meta,
         );
     }
 
@@ -178,7 +177,7 @@ final class MaxUploader
 
         $data = $this->uploadWithAttempts(
             fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::File, $meta, true),
-            $meta
+            $meta,
         );
 
         $model = UploadedFile::newFromData($data);
@@ -218,7 +217,7 @@ final class MaxUploader
 
         $data = $this->uploadWithAttempts(
             fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Image, $meta, true),
-            $meta
+            $meta,
         );
 
         $model = PhotoTokens::newFromData($data);
@@ -241,7 +240,7 @@ final class MaxUploader
 
         return $this->uploadWithAttempts(
             fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Video, $meta, false),
-            $meta
+            $meta,
         );
     }
 
@@ -272,7 +271,7 @@ final class MaxUploader
         ContentInterface $content,
         UploadType $type,
         ?UploadEndpoint $meta,
-        bool $json
+        bool $json,
     ): array|string {
         $this->lastMeta = null;
         $bodySize = $content->getSize();
@@ -281,7 +280,7 @@ final class MaxUploader
         }
         // Размер фрагмента не может быть меньше 1/1000 длины файла или потока,
         // так как количество фрагментов не может быть больше 1000
-        $baseFragmentLength = max($this->fragmentLength, (int)($bodySize / 900), 64000);
+        $baseFragmentLength = max($this->fragmentLength, (int) ($bodySize / 900), 64000);
         $fragmentOffset = 0;
         $fragmentLength = $baseFragmentLength;
 
@@ -345,7 +344,7 @@ final class MaxUploader
                 $this->lowSpeedLimit,
                 $this->lowSpeedTime,
                 $progressCallback,
-                $json
+                $json,
             );
 
             if (!$json) {

@@ -16,8 +16,7 @@ final readonly class File implements FileInterface
     public function __construct(
         public string $fileName,
         public ?string $postName = null,
-    ) {
-    }
+    ) {}
 
     public function getFileName(): string
     {

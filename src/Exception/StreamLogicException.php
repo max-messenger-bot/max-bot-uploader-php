@@ -11,6 +11,4 @@ use MaxMessenger\Bot\Exception\MaxApiLogicException;
  *
  * Thrown when a logic error occurs while working with streams during the upload process.
  */
-final class StreamLogicException extends MaxApiLogicException
-{
-}
+final class StreamLogicException extends MaxApiLogicException {}

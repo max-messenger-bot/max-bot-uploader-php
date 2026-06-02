@@ -19,7 +19,6 @@ final class Progress
         public int $fragmentOffset,
         public int $fragmentLength,
         public int $bytesSent,
-        public int $size
-    ) {
-    }
+        public int $size,
+    ) {}
 }

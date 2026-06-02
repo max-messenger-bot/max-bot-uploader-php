@@ -12,7 +12,7 @@ namespace MaxMessenger\Uploader\Exception;
 final class UnknownResponseFormatException extends UploaderException
 {
     public function __construct(
-        public readonly array $data
+        public readonly array $data,
     ) {
         parent::__construct('Unknown data format.');
     }

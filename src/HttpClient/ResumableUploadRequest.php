@@ -43,7 +43,7 @@ final readonly class ResumableUploadRequest extends BaseRequest implements HttpR
         private int $lowSpeedLimit,
         private int $lowSpeedTime,
         private ?Closure $progressCallback,
-        private bool $expectedJsonResponse
+        private bool $expectedJsonResponse,
     ) {
         $this->size = $this->content->getSize();
         $this->expectedHttpCode = $this->offset + $this->length >= $this->size ? 200 : 201;
@@ -138,7 +138,7 @@ final readonly class ResumableUploadRequest extends BaseRequest implements HttpR
         ?string $redirectUrl,
         array $headers,
         ?string $contentType,
-        string $response
+        string $response,
     ): GeneralResponse {
         return new GeneralResponse(
             $this,
@@ -146,7 +146,7 @@ final readonly class ResumableUploadRequest extends BaseRequest implements HttpR
             $url,
             $contentType,
             $response,
-            $this->expectedHttpCode
+            $this->expectedHttpCode,
         );
     }
 }

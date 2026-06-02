@@ -9,6 +9,4 @@ namespace MaxMessenger\Uploader\Exception;
  *
  * Thrown when an error occurs while working with streams during the upload process.
  */
-final class StreamException extends UploaderException
-{
-}
+final class StreamException extends UploaderException {}

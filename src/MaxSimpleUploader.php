@@ -28,9 +28,8 @@ final class MaxSimpleUploader
     public int $lowSpeedTime = 10;
 
     public function __construct(
-        private readonly MaxApiClient $apiClient
-    ) {
-    }
+        private readonly MaxApiClient $apiClient,
+    ) {}
 
     /**
      * @param positive-int $lowSpeedLimit

@@ -11,6 +11,4 @@ use MaxMessenger\Bot\Exception\MaxApiException;
  *
  * Abstract exception for errors that occur during the file upload process.
  */
-abstract class UploaderException extends MaxApiException
-{
-}
+abstract class UploaderException extends MaxApiException {}

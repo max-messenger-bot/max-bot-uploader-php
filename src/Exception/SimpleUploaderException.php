@@ -7,6 +7,4 @@ namespace MaxMessenger\Uploader\Exception;
 /**
  * SimpleUploader exception.
  */
-final class SimpleUploaderException extends UploaderException
-{
-}
+final class SimpleUploaderException extends UploaderException {}

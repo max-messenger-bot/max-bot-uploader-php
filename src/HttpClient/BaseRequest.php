@@ -44,14 +44,14 @@ abstract readonly class BaseRequest implements HttpRequestInterface
         ?string $redirectUrl,
         array $headers,
         ?string $contentType,
-        string $response
+        string $response,
     ): GeneralResponse {
         return new GeneralResponse(
             $this,
             $httpCode,
             $url,
             $contentType,
-            $response
+            $response,
         );
     }
 }

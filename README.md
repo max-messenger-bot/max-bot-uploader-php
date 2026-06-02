@@ -6,7 +6,7 @@
 **Multipart upload** и **Resumable upload** методы.<br>
 Полный контроль над загрузкой.
 
-**Актуальность:** 27 мая 2026 г.
+**Актуальность:** 2 июня 2026 г.
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;

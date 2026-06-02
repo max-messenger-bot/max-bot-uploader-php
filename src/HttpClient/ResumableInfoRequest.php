@@ -17,9 +17,8 @@ final readonly class ResumableInfoRequest extends BaseRequest
      * @param non-empty-string $url
      */
     public function __construct(
-        private string $url
-    ) {
-    }
+        private string $url,
+    ) {}
 
     public function getBody(): null
     {

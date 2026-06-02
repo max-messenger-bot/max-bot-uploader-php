@@ -19,9 +19,8 @@ use function is_array;
 final readonly class MaxUploadHttpClient
 {
     public function __construct(
-        private HttpClientInterface $httpClient
-    ) {
-    }
+        private HttpClientInterface $httpClient,
+    ) {}
 
     /**
      * Получает с сервера информацию о загруженных данных.
@@ -39,7 +38,7 @@ final readonly class MaxUploadHttpClient
             $body = $response->getBody();
             if (preg_match('/^0-(\d+)\/(\d+)$/', $body, $matches)) {
                 /** @psalm-suppress ArgumentTypeCoercion */
-                return new ResumableUploadInfo((int)$matches[1], (int)$matches[2]);
+                return new ResumableUploadInfo((int) $matches[1], (int) $matches[2]);
             }
         }
 
@@ -68,7 +67,7 @@ final readonly class MaxUploadHttpClient
         int $lowSpeedLimit,
         int $lowSpeedTime,
         ?Closure $progressCallback,
-        bool $json
+        bool $json,
     ): array|string {
         $request = new ResumableUploadRequest(
             $url,
@@ -79,7 +78,7 @@ final readonly class MaxUploadHttpClient
             $lowSpeedLimit,
             $lowSpeedTime,
             $progressCallback,
-            $json
+            $json,
         );
 
         /** @psalm-suppress InvalidArgument Psalm bug */
@@ -99,7 +98,7 @@ final readonly class MaxUploadHttpClient
         FileInterface|StringFileInterface $file,
         int $lowSpeedLimit,
         int $lowSpeedTime,
-        bool $json
+        bool $json,
     ): array|string {
         $request = new SimpleUploadRequest($url, $file, $lowSpeedLimit, $lowSpeedTime, $json);
 
