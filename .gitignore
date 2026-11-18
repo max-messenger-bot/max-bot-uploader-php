@@ -1,7 +1,12 @@
+# Зависимости Composer
 /vendor/
-/.idea/
-/.qwen/
-/test/
 /composer.lock
-/notes.txt
-/.php-cs-fixer.cache
+
+# Настройки IDE
+/.idea/
+
+# Локальные dev-скрипты и наработки
+/dev/
+
+# Локальные конфиги dev-инструментов
+.max-tokens

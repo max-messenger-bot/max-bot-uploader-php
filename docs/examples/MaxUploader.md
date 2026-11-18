@@ -1,14 +1,15 @@
 # Примеры Resumable-загрузки
 
-## Простая загрузка различных типов файлов
+## Простая загрузка различных типов медиафайлов
 
 **Загрузка файла без указания имени:**
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 use MaxMessenger\Uploader\MaxUploader;
 
-$apiClient = new MaxApiClient($accessToken);
+$apiClient = new MaxApiClient($accessToken, useRussianTrustedCaCertificates: true);
 $uploader = new MaxUploader($apiClient);
 
 $fileToken = $uploader->uploadFile(__FILE__);
@@ -19,10 +20,10 @@ $message = NewMessageBody::new()
 **Загрузка файла с указанием имени:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
-use MaxMessenger\Uploader\MaxUploader\Content\File;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
+use MaxMessenger\Uploader\Content\FileContent;
 
-$fileToken = $uploader->uploadFile(new File(__FILE__, 'file.txt'));
+$fileToken = $uploader->uploadFile(new FileContent(__FILE__, 'file.txt'));
 $message = NewMessageBody::new()
     ->addFileAttachment($fileToken);
 ```
@@ -30,10 +31,10 @@ $message = NewMessageBody::new()
 **Загрузка файла с именем и текстом сообщения:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
-use MaxMessenger\Uploader\MaxUploader\Content\File;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
+use MaxMessenger\Uploader\Content\FileContent;
 
-$fileToken = $uploader->uploadFile(new File(__FILE__, 'Документация.txt'));
+$fileToken = $uploader->uploadFile(new FileContent(__FILE__, 'Документация.txt'));
 $message = NewMessageBody::make('Документацию к проекту')
     ->addFileAttachment($fileToken);
 ```
@@ -41,21 +42,21 @@ $message = NewMessageBody::make('Документацию к проекту')
 **Загрузка файла из строки:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
-use MaxMessenger\Uploader\MaxUploader\Content\StringFile;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
+use MaxMessenger\Uploader\Content\StringContent;
 
-$fileToken = $uploader->uploadFile(new StringFile('Содержимое файла', 'Отчёт.txt'));
+$fileToken = $uploader->uploadFile(new StringContent('Содержимое файла', 'Отчёт.txt'));
 $message = NewMessageBody::make('Прикладываю отчёт')
     ->addFileAttachment($fileToken);
 ```
 
-**Загрузка файла из ресурса:**
+**Загрузка изображения из ресурса:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
-use MaxMessenger\Uploader\MaxUploader\Content\Stream;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
+use MaxMessenger\Uploader\Content\StreamContent;
 
-$imageToken = $uploader->uploadFile(new Stream($resource, 'image.webp'));
+$imageToken = $uploader->uploadImage(new StreamContent($resource, 'image.webp'));
 $message = NewMessageBody::new()
     ->addImageAttachment($imageToken);
 ```
@@ -63,7 +64,7 @@ $message = NewMessageBody::new()
 **Загрузка аудиофайла:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 
 $audioToken = $uploader->uploadAudio(__DIR__ . '/files/audio.mp3');
 $message = NewMessageBody::make('Запись лекции')
@@ -73,7 +74,7 @@ $message = NewMessageBody::make('Запись лекции')
 **Загрузка нескольких изображений:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 
 $image1Token = $uploader->uploadImage(__DIR__ . '/files/image.jpeg');
 $image2Token = $uploader->uploadImage(__DIR__ . '/files/image.png');
@@ -85,37 +86,37 @@ $message = NewMessageBody::make('Фотографии с пикника')
 **Загрузка нескольких видеофайлов:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 
 $video1Token = $uploader->uploadVideo(__DIR__ . '/files/video1.mp4');
 $video2Token = $uploader->uploadVideo(__DIR__ . '/files/video2.mp4');
 $message = NewMessageBody::new()
-    ->addVideoAttachment($videoToken)
-    ->addVideoAttachment($videoToken);
+    ->addVideoAttachment($video1Token)
+    ->addVideoAttachment($video2Token);
 ```
 
 **Загрузка изображения и видео в одном сообщении:**
 
 ```php
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 
 $imageToken = $uploader->uploadImage(__DIR__ . '/files/image.jpeg');
 $videoToken = $uploader->uploadVideo(__DIR__ . '/files/video.mp4');
 $message = NewMessageBody::new()
-    ->addImageAttachment($videoToken)
+    ->addImageAttachment($imageToken)
     ->addVideoAttachment($videoToken);
 ```
 
-## Получение детальной информации о загруженных файлах
+## Получение детальной информации о загруженных медиафайлах
 
 **Расширенная загрузка файла с получением деталей:**
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
-use MaxMessenger\Bot\Models\Requests\NewMessageBody;
+use MaxMessenger\Bot\Model\Request\NewMessageBody;
 use MaxMessenger\Uploader\MaxUploader;
 
-$apiClient = new MaxApiClient($accessToken);
+$apiClient = new MaxApiClient($accessToken, useRussianTrustedCaCertificates: true);
 $uploader = new MaxUploader($apiClient);
 
 $uploadedFile = $uploader->uploadFileEx(__FILE__);
@@ -141,49 +142,61 @@ $imageToken = reset($photos)->getToken();
 
 ## Контроль скорости загрузки, количества повторных попыток и обработка ошибок
 
-**Настройка лимита низкой скорости (100kb/s) и количества повторных попыток через методы:**
+> [!NOTE]
+> По умолчанию `lowSpeedLimit = 1` байт/с и `lowSpeedTime = 10` секунд.
+> `PsrHttpClient` игнорирует эти параметры.
+
+> [!NOTE]
+> Таймаут задаётся в **миллисекундах**. `PsrHttpClient` его не применяет — там таймаут задают
+> в настройках самого клиента.
+
+**Настройка лимита низкой скорости (100 КиБ/с) и количества повторных попыток через методы:**
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
 use MaxMessenger\Uploader\MaxUploader;
 
-$apiClient = new MaxApiClient($accessToken);
+$apiClient = new MaxApiClient($accessToken, useRussianTrustedCaCertificates: true);
 $uploader = new MaxUploader($apiClient);
 
-$uploader->setLowSpeedLimit(100 * 1024 * 10);
+$uploader->setLowSpeedLimit(100 * 1024);
 $uploader->setLowSpeedTime(10);
-$uploader->setTimeout(600);
+$uploader->setTimeout(10 * 60 * 1000);
 $uploader->setRetryAttempts(10);
 ```
 
-**Настройка лимита низкой скорости (100kb/s) и количества повторных попыток через свойства:**
+**Настройка лимита низкой скорости (100 КиБ/с) и количества повторных попыток через свойства:**
 
 ```php
-$uploader->lowSpeedLimit = 100 * 1024 * 10;
+$uploader->lowSpeedLimit = 100 * 1024;
 $uploader->lowSpeedTime = 10;
-$uploader->timeout = 600;
+$uploader->timeout = 10 * 60 * 1000;
 $uploader->retryAttempts = 10;
 ```
 
-**Обработка таймаута при загрузке большого файла:**
+**Возобновление загрузки при повторной попытке:**
+
+При включённом `$uploader->smartResume` загрузчик запрашивает сведения об уже переданной части
+медиафайла и продолжает с подтверждённого сервером смещения. Если установить `false`,
+при повторной попытке загрузчик использует сохранённое смещение последнего фрагмента.
+
+**Обработка таймаута при загрузке большого медиафайла:**
 
 ```php
-use Mj4444\SimpleHttpClient\Exceptions\GeneralException;
+use MaxMessenger\Bot\HttpClient\Exception\TimeoutException;
 
 $uploader->timeout = 1;
 $uploader->retryAttempts = 0;
 
 try {
     $videoToken = $uploader->uploadVideo(__DIR__ . '/files/big-video.mp4');
-} catch (GeneralException $e) {
-    echo 'Message: ' . $e->getMessage()) . PHP_EOL;
-    echo 'Code: ' . $e->getCode()) . PHP_EOL;
-    if ($e->getCode() === GeneralException::OPERATION_TIMEOUTED) {
-        echo 'Timeout' . PHP_EOL;
-        
-        // Возобновляем загрузку
-        $videoToken = $uploader->uploadVideo(__DIR__ . '/files/big-video.mp4', $uploader->getLastMeta());
-    }
+} catch (TimeoutException $e) {
+    echo 'Timeout: ' . $e->getMessage() . PHP_EOL;
+
+    // Продолжаем загрузку с последнего полученного адреса, если он есть.
+    $uploader->setTimeout(10 * 60 * 1000);
+    $uploader->setUploadEndpoint($uploader->getLastUploadEndpoint(), startFromBeginning: false);
+    $videoToken = $uploader->uploadVideo(__DIR__ . '/files/big-video.mp4');
 }
 ```
 
@@ -193,20 +206,21 @@ try {
 
 ```php
 use MaxMessenger\Bot\MaxApiClient;
+use MaxMessenger\Uploader\DTO\UploadEventType;
 use MaxMessenger\Uploader\MaxUploader;
-use MaxMessenger\Uploader\MaxUploader\DTO\UploadEventType;
 
-$apiClient = new MaxApiClient($accessToken);
+$apiClient = new MaxApiClient($accessToken, useRussianTrustedCaCertificates: true);
 $uploader = new MaxUploader($apiClient);
 
 $uploader->setEventCallback(function (UploadEventType $event) {
-    // FileInfoRequest — Генерируется перед запросом информации о состоянии загружаемого файла.
-    // SendFragment — Генерируется перед началом загрузки очередного фрагмента.
+    // FileInfoRequest — Генерируется перед запросом информации о состоянии загружаемого медиафайла.
     // Reset — Генерируется при перезапуске загрузки с начала.
     // Resume — Генерируется при возобновлении загрузки.
+    // SendFragment — Генерируется перед началом загрузки очередного фрагмента.
     // Timeout — Генерируется при получении исключения с таймаутом.
+    // Error — Генерируется при неожиданном HTTP-коде ответа на передачу медиафайла.
     // UrlRequest — Генерируется перед запросом ссылки для загрузки.
-    echo 'Event: '$event->name . PHP_EOL;
+    echo 'Event: ' . $event->name . PHP_EOL;
 });
 ```
 
@@ -215,18 +229,18 @@ $uploader->setEventCallback(function (UploadEventType $event) {
 ```php
 use MaxMessenger\Bot\MaxApiClient;
 use MaxMessenger\Uploader\MaxUploader;
-use MaxMessenger\Uploader\MaxUploader\DTO\Progress;
+use MaxMessenger\Uploader\DTO\Progress;
 
-$apiClient = new MaxApiClient($accessToken);
+$apiClient = new MaxApiClient($accessToken, useRussianTrustedCaCertificates: true);
 $uploader = new MaxUploader($apiClient);
 
 $uploader->setProgressCallback(function (Progress $progress) {
     $allBytesSent = $progress->fragmentOffset + $progress->bytesSent;
     echo "FragmentOffset: $progress->fragmentOffset, "; // Начало текущего загружаемого фрагмента
-    echo "FragmentLength: $progress->fragmentLength, "; // Длинна текущего загружаемого фрагмента
+    echo "FragmentLength: $progress->fragmentLength, "; // Длина текущего загружаемого фрагмента
     echo "FragmentBytesSent: $progress->bytesSent, "; // Отправлено байт текущего фрагмента
-    echo "AllBytesSent: $allBytesSent, "; // Отправлено байт всего от начала файла
-    echo "Size: $progress->size\n"; // Общая длина файла
+    echo "AllBytesSent: $allBytesSent, "; // Отправлено байт всего от начала медиафайла
+    echo "Size: $progress->size\n"; // Общая длина медиафайла
 });
 ```
 

@@ -7,8 +7,8 @@ namespace MaxMessenger\Uploader\Exception;
 use MaxMessenger\Bot\Exception\MaxApiLogicException;
 
 /**
- * Stream logic exception.
+ * Исключение при нарушении логики работы с потоком.
  *
- * Thrown when a logic error occurs while working with streams during the upload process.
+ * Возникает при нарушении логики работы с потоками во время загрузки медиафайла.
  */
 final class StreamLogicException extends MaxApiLogicException {}

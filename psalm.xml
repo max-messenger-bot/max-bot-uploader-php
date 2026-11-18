@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <psalm
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     errorLevel="1"
     resolveFromConfigFile="true"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
     findUnusedBaselineEntry="true"
@@ -14,29 +14,15 @@
 >
     <projectFiles>
         <directory name="src" />
+        <directory name="tests" />
         <ignoreFiles>
+            <directory name="tests/Support/_generated" />
+            <directory name="tests/_output" />
+            <file name="tests/Support/UnitTester.php" />
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
-    <issueHandlers>
-        <PossiblyUnusedMethod>
-            <errorLevel type="suppress">
-                <directory name="src/Exception" />
-                <directory name="src/MaxSimpleUploader" />
-                <file name="src/MaxUploader.php" />
-            </errorLevel>
-        </PossiblyUnusedMethod>
-        <PossiblyUnusedProperty>
-            <errorLevel type="suppress">
-                <directory name="src/MaxUploader/DTO" />
-            </errorLevel>
-        </PossiblyUnusedProperty>
-        <UnusedClass>
-            <errorLevel type="suppress">
-                <directory name="src/MaxUploader/Content" />
-                <file name="src/MaxSimpleUploader.php" />
-                <file name="src/MaxUploader.php" />
-            </errorLevel>
-        </UnusedClass>
-    </issueHandlers>
+    <plugins>
+        <pluginClass class="Psalm\PhpUnitPlugin\Plugin" />
+    </plugins>
 </psalm>

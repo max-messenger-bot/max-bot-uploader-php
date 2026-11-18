@@ -1,9 +1,13 @@
 {
     "name": "max-messenger-bot/max-bot-uploader-php",
-    "description": "Max messenger Uploader",
+    "description": "PHP library for uploading files via the Max Messenger Bot API",
     "keywords": [
         "max",
         "messenger",
+        "bot",
+        "max messenger",
+        "max bot",
+        "upload",
         "uploader",
         "php"
     ],
@@ -13,6 +17,11 @@
     "autoload": {
         "psr-4": {
             "MaxMessenger\\Uploader\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MaxMessenger\\Uploader\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -27,21 +36,24 @@
     },
     "require": {
         "php": "^8.2",
-        "max-messenger-bot/max-bot-api-php": "^0.3",
-        "mj4444/simple-http-client": "^0.2"
+        "ext-mbstring": "*",
+        "max-messenger-bot/max-bot-api-php": "^1.0"
     },
     "require-dev": {
         "codeception/codeception": "^5.3",
         "codeception/module-asserts": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
-        "vimeo/psalm": "^6.16"
-    },
-    "config": {
-        "sort-packages": true
+        "sebastian/diff": "^6.0",
+        "symfony/console": "^7.4",
+        "vimeo/psalm": "^7.10"
     },
     "scripts": {
         "cs": "php-cs-fixer check --diff",
         "cs-fix": "php-cs-fixer fix",
-        "psalm": "psalm"
+        "psalm": "psalm",
+        "test": "codecept run"
+    },
+    "config": {
+        "sort-packages": true
     }
 }

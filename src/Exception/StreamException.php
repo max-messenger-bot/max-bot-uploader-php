@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader\Exception;
 
 /**
- * Stream exception.
+ * Исключение при работе с потоком.
  *
- * Thrown when an error occurs while working with streams during the upload process.
+ * Возникает при ошибке работы с потоками во время загрузки медиафайла.
  */
 final class StreamException extends UploaderException {}

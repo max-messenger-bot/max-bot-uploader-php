@@ -7,8 +7,8 @@ namespace MaxMessenger\Uploader\Exception;
 use MaxMessenger\Bot\Exception\MaxApiException;
 
 /**
- * Base class for uploader exceptions.
+ * Базовый класс исключений загрузчика.
  *
- * Abstract exception for errors that occur during the file upload process.
+ * Абстрактное исключение для ошибок, возникающих при загрузке медиафайла.
  */
 abstract class UploaderException extends MaxApiException {}

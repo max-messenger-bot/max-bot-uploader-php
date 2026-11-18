@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace MaxMessenger\Uploader\Exception;
 
 /**
- * Unknown response format.
+ * Неизвестный формат ответа.
  *
- * Exception thrown when received data is in an unknown or invalid format.
+ * Возникает, если полученные данные имеют неизвестный или недопустимый формат.
  */
 final class UnknownResponseFormatException extends UploaderException
 {
+    /**
+     * @param array $data Данные ответа недопустимого формата.
+     */
     public function __construct(
         public readonly array $data,
     ) {
@@ -18,7 +21,7 @@ final class UnknownResponseFormatException extends UploaderException
     }
 
     /**
-     * @return array The invalid data that caused the exception.
+     * @return array Некорректные данные, вызвавшие исключение.
      */
     public function getData(): array
     {

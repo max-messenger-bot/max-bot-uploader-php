@@ -4,79 +4,58 @@ declare(strict_types=1);
 
 namespace MaxMessenger\Uploader;
 
-use Closure;
-use MaxMessenger\Bot\MaxApiClient;
+use MaxMessenger\Bot\HttpClient\Exception\TimeoutException;
 use MaxMessenger\Bot\Model\Enum\UploadType;
-use MaxMessenger\Bot\Model\Response\PhotoTokens;
-use MaxMessenger\Bot\Model\Response\UploadedFile;
 use MaxMessenger\Bot\Model\Response\UploadEndpoint;
 use MaxMessenger\Uploader\Contract\ContentInterface;
-use MaxMessenger\Uploader\Exception\StreamException;
-use MaxMessenger\Uploader\Exception\UnknownResponseErrorException;
-use MaxMessenger\Uploader\Exception\UnknownResponseFormatException;
-use MaxMessenger\Uploader\HttpClient\MaxUploadHttpClient;
-use MaxMessenger\Uploader\MaxUploader\Content\File;
-use MaxMessenger\Uploader\MaxUploader\DTO\Progress;
-use MaxMessenger\Uploader\MaxUploader\DTO\UploadEventType;
-use Mj4444\SimpleHttpClient\Exceptions\GeneralException;
+use MaxMessenger\Uploader\DTO\ResumableUploadInfo;
+use MaxMessenger\Uploader\DTO\ResumableUploadStatus;
+use MaxMessenger\Uploader\DTO\UploadEventType;
+use MaxMessenger\Uploader\Exception\UnexpectedUploadRangeException;
+use MaxMessenger\Uploader\Exception\UploadEndpointException;
+use RuntimeException;
 
-use function is_bool;
-use function is_string;
+use function intdiv;
+use function max;
+use function min;
 
-final class MaxUploader
+/**
+ * Загружает медиафайлы в МАКС по фрагментам с возможностью возобновления передачи.
+ */
+final class MaxUploader extends BaseUploader
 {
     /**
-     * @var Closure(UploadEventType $eventType): void|null
-     */
-    public ?Closure $eventCallback = null;
-    /**
-     * @var positive-int
+     * @var positive-int Максимальная длина одного фрагмента в байтах.
      */
     public int $fragmentLength = PHP_INT_MAX;
     /**
-     * @var positive-int
+     * Разрешает получать сведения об уже загруженной части медиафайла.
+     *
+     * Если `true`, смещение для продолжения определяется по ответу сервера.
+     * Если `false`, используется сохранённое смещение последнего фрагмента.
      */
-    public int $lowSpeedLimit = 102400;
+    public bool $smartResume = true;
     /**
-     * @var positive-int
+     * Начинать загрузку медиафайла с начала без запроса его состояния.
+     *
+     * Действует только при включённом {@see self::$smartResume} и заданном
+     * {@see BaseUploader::$uploadEndpoint} (задаётся через {@see self::setUploadEndpoint()}).
+     *
+     * При каждой загрузке значение сбрасывается в `true`. Для возобновления перед каждой загрузкой
+     * установите `false` напрямую или передайте его вторым аргументом `setUploadEndpoint()`.
      */
-    public int $lowSpeedTime = 10;
+    public bool $startFromBeginning = true;
     /**
-     * @var Closure(Progress $progress): void|null
+     * Начать следующую попытку с нуля без запроса состояния загрузки.
      */
-    public ?Closure $progressCallback = null;
+    private bool $forceStartFromBeginning = false;
     /**
      * @var non-negative-int
      */
-    public int $retryAttempts = 100;
-    /**
-     * @var non-negative-int
-     */
-    public int $timeout = 0;
-    private ?UploadEndpoint $lastMeta = null;
-
-    public function __construct(
-        private readonly MaxApiClient $apiClient,
-    ) {}
-
-    public function getLastMeta(): ?UploadEndpoint
-    {
-        return $this->lastMeta;
-    }
+    private int $lastFragmentOffset = 0;
 
     /**
-     * @param Closure(UploadEventType $eventType): void|null $eventCallback
-     * @return $this
-     */
-    public function setEventCallback(?Closure $eventCallback): self
-    {
-        $this->eventCallback = $eventCallback;
-
-        return $this;
-    }
-
-    /**
-     * @param positive-int $fragmentLength
+     * @param positive-int $fragmentLength Максимальная длина одного фрагмента в байтах.
      * @return $this
      */
     public function setFragmentLength(int $fragmentLength): self
@@ -87,309 +66,178 @@ final class MaxUploader
     }
 
     /**
-     * @param positive-int $lowSpeedLimit
+     * @param bool $smartResume Разрешать ли получение сведений об уже загруженной части медиафайла.
      * @return $this
      */
-    public function setLowSpeedLimit(int $lowSpeedLimit): self
+    public function setSmartResume(bool $smartResume): self
     {
-        $this->lowSpeedLimit = $lowSpeedLimit;
+        $this->smartResume = $smartResume;
 
         return $this;
     }
 
     /**
-     * @param positive-int $lowSpeedTime
+     * @param UploadEndpoint|null $uploadEndpoint Адрес загрузки или `null` для автоматического получения адреса.
+     * @param bool $startFromBeginning При включённом {@see self::$smartResume} начать загрузку с начала без
+     *     запроса её состояния.
      * @return $this
      */
-    public function setLowSpeedTime(int $lowSpeedTime): self
+    public function setUploadEndpoint(?UploadEndpoint $uploadEndpoint, bool $startFromBeginning = true): static
     {
-        $this->lowSpeedTime = $lowSpeedTime;
+        parent::setUploadEndpoint($uploadEndpoint);
+
+        $this->startFromBeginning = $startFromBeginning;
 
         return $this;
-    }
-
-    /**
-     * @param Closure(Progress $progress): void|null $progressCallback
-     * @return $this
-     */
-    public function setProgressCallback(?Closure $progressCallback): self
-    {
-        $this->progressCallback = $progressCallback;
-
-        return $this;
-    }
-
-    /**
-     * @param non-negative-int $retryAttempts
-     * @return $this
-     */
-    public function setRetryAttempts(int $retryAttempts): self
-    {
-        $this->retryAttempts = $retryAttempts;
-
-        return $this;
-    }
-
-    /**
-     * @param non-negative-int $timeout
-     * @return $this
-     */
-    public function setTimeout(int $timeout): self
-    {
-        $this->timeout = $timeout;
-
-        return $this;
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     * @return non-empty-string
-     */
-    public function uploadAudio(ContentInterface|string $content, ?UploadEndpoint $meta = null): string
-    {
-        if (is_string($content)) {
-            $content = new File($content);
-        }
-
-        return $this->uploadWithAttempts(
-            fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Audio, $meta, false),
-            $meta,
-        );
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     * @return non-empty-string
-     */
-    public function uploadFile(ContentInterface|string $content, ?UploadEndpoint $meta = null): string
-    {
-        return $this->uploadFileEx($content, $meta)->getToken();
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     */
-    public function uploadFileEx(ContentInterface|string $content, ?UploadEndpoint $meta = null): UploadedFile
-    {
-        if (is_string($content)) {
-            $content = new File($content);
-        }
-
-        $data = $this->uploadWithAttempts(
-            fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::File, $meta, true),
-            $meta,
-        );
-
-        $model = UploadedFile::newFromData($data);
-        if (!$model->isValid()) {
-            throw new UnknownResponseFormatException($data);
-        }
-
-        return $model;
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     * @return non-empty-string
-     */
-    public function uploadImage(ContentInterface|string $content, ?UploadEndpoint $meta = null): string
-    {
-        $photos = $this->uploadImageEx($content, $meta)->getPhotos();
-
-        $item = reset($photos);
-
-        /** @psalm-suppress DocblockTypeContradiction */
-        if ($item === false || empty($token = $item->getToken())) {
-            throw new UnknownResponseFormatException($photos);
-        }
-
-        return $token;
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     */
-    public function uploadImageEx(ContentInterface|string $content, ?UploadEndpoint $meta = null): PhotoTokens
-    {
-        if (is_string($content)) {
-            $content = new File($content);
-        }
-
-        $data = $this->uploadWithAttempts(
-            fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Image, $meta, true),
-            $meta,
-        );
-
-        $model = PhotoTokens::newFromData($data);
-        if (!$model->isValid()) {
-            throw new UnknownResponseFormatException($data);
-        }
-
-        return $model;
-    }
-
-    /**
-     * @param ContentInterface|non-empty-string $content
-     * @return non-empty-string
-     */
-    public function uploadVideo(ContentInterface|string $content, ?UploadEndpoint $meta = null): string
-    {
-        if (is_string($content)) {
-            $content = new File($content);
-        }
-
-        return $this->uploadWithAttempts(
-            fn(?UploadEndpoint $meta) => $this->uploadEx($content, UploadType::Video, $meta, false),
-            $meta,
-        );
-    }
-
-    /**
-     * @param non-negative-int $frOffset
-     * @param positive-int $frLength
-     * @param positive-int $size
-     * @param Closure(Progress $progress): void $callback
-     * @return Closure(non-negative-int $bytesSent): void
-     */
-    private function makeProgressCallback(int &$frOffset, int &$frLength, int $size, Closure $callback): Closure
-    {
-        /**
-         * @param non-negative-int $bytesSent
-         */
-        return static function (int $bytesSent) use (&$frOffset, &$frLength, $size, $callback): void {
-            $callback(new Progress($frOffset, $frLength, $bytesSent, $size));
-        };
     }
 
     /**
      * @template T of bool
-     * @param ContentInterface $content
      * @param T $json
      * @return (T is true ? array : non-empty-string)
      */
-    private function uploadEx(
+    protected function uploadAttempt(
         ContentInterface $content,
         UploadType $type,
-        ?UploadEndpoint $meta,
+        bool $endpointProvided,
         bool $json,
+        bool &$canRetry,
     ): array|string {
-        $this->lastMeta = null;
-        $bodySize = $content->getSize();
-        if ($bodySize < 1) {
-            throw new StreamException('Cannot upload empty file.');
+        $contentSize = $content->getSize();
+
+        if ($this->lastUploadAttempts === 1 && !$content->isSeekable()) {
+            $this->startFromBeginning = true;
         }
-        // Размер фрагмента не может быть меньше 1/1000 длины файла или потока,
-        // так как количество фрагментов не может быть больше 1000
-        $baseFragmentLength = max($this->fragmentLength, (int) ($bodySize / 900), 64000);
-        $fragmentOffset = 0;
-        $fragmentLength = $baseFragmentLength;
 
-        $uploadClient = new MaxUploadHttpClient($this->apiClient->getHttpClient()->getHttpClient());
-        $progressCallback = $this->progressCallback !== null
-            ? $this->makeProgressCallback($fragmentOffset, $fragmentLength, $bodySize, $this->progressCallback)
-            : null;
+        $this->resolveUploadEndpoint($type, $endpointProvided, $contentSize);
 
-        if ($meta !== null) {
-            if ($this->eventCallback !== null) {
-                ($this->eventCallback)(UploadEventType::FileInfoRequest);
-            }
-
-            // Получаем с сервера количество загруженных данных
-            $uploadInfo = $uploadClient->getResumableUploadInfo($meta->getUrl());
-            if (!is_bool($uploadInfo) && $uploadInfo->totalBytes === $bodySize) {
-                // Продолжаем загрузку
-                if ($this->eventCallback !== null) {
-                    ($this->eventCallback)(UploadEventType::Resume);
-                }
-                $fragmentOffset = $uploadInfo->lastLoadedByte + 1;
-            } else {
-                // Начинаем загрузку сначала
-                if ($this->eventCallback !== null) {
-                    ($this->eventCallback)(UploadEventType::Reset);
-                }
-                if ($uploadInfo === false) {
-                    // Нужно получить новый url для загрузки
-                    $meta = null;
-                }
-            }
-        }
-        if ($meta === null) {
-            if ($this->eventCallback !== null) {
-                ($this->eventCallback)(UploadEventType::UrlRequest);
-            }
-
-            // Получаем новый url для загрузки
-            $meta = $this->apiClient->getUploadUrl($type);
-        }
-        $this->lastMeta = $meta;
-
+        /** @var (T is true ? null : non-empty-string) $token */
         if (!$json) {
-            $token = $meta->getToken() ?? throw new UnknownResponseFormatException($meta->getRawData());
+            $token = self::getUploadToken($this->lastUploadEndpoint);
+
+            if ($this->lastFragmentOffset === $contentSize) {
+                return $token;
+            }
         }
 
-        while ($fragmentOffset < $bodySize) {
-            if ($this->eventCallback !== null) {
-                ($this->eventCallback)(UploadEventType::SendFragment);
+        // Загрузка медиафайла должна укладываться в 1000 запросов.
+        // Используем размер / 900 как нижнюю границу длины фрагмента, чтобы оставить запас.
+        $maxFragmentLength = max($this->fragmentLength, intdiv($contentSize, 900), 65536);
+        // Сервер изображений требует границы фрагментов, кратные 32768 байтам: округляем вверх.
+        if ($maxFragmentLength < $contentSize) {
+            $maxFragmentLength = (intdiv($maxFragmentLength - 1, 32768) + 1) * 32768;
+        }
+
+        if ($this->lastFragmentOffset >= $contentSize) {
+            $this->lastFragmentOffset = $contentSize - 1;
+        }
+
+        do {
+            $this->eventCallback?->__invoke(UploadEventType::SendFragment);
+
+            /** @var positive-int $fragmentLength */
+            $fragmentLength = min($contentSize - $this->lastFragmentOffset, $maxFragmentLength);
+            $progressCallback = $this->makeProgressCallback($this->lastFragmentOffset, $contentSize);
+            $stream = $content->getStream($this->lastFragmentOffset, $fragmentLength, $progressCallback);
+
+            try {
+                $data = $this->uploadClient->postResumableUpload(
+                    $this->lastUploadEndpoint->getUrl(),
+                    $stream,
+                    $content->getPostName(),
+                    $content->getContentType(),
+                    $contentSize,
+                    $this->lastFragmentOffset,
+                    $this->timeout,
+                    $this->lowSpeedLimit,
+                    $this->lowSpeedTime,
+                    $json,
+                );
+                /** @var (T is true ? array : ResumableUploadInfo) $data Psalm теряет условный тип при передаче T. */
+            } catch (RuntimeException $e) {
+                $this->forceStartFromBeginning = !$e instanceof TimeoutException;
+                $canRetry = $stream->isSeekable()
+                    || ($stream->tell() === 0 && (!$this->forceStartFromBeginning || $this->lastFragmentOffset === 0));
+
+                throw $e;
             }
-
-            /** @var positive-int $fragmentLength $bodySize - $fragmentOffset > 0, $baseFragmentLength > 0 */
-            $fragmentLength = min($bodySize - $fragmentOffset, $baseFragmentLength);
-
-            $data = $uploadClient->postResumableUpload(
-                $meta->getUrl(),
-                $content,
-                $fragmentOffset,
-                $fragmentLength,
-                $this->timeout,
-                $this->lowSpeedLimit,
-                $this->lowSpeedTime,
-                $progressCallback,
-                $json,
-            );
 
             if (!$json) {
-                $pos = $fragmentOffset + $fragmentLength - 1;
-                if ($data !== "0-$pos/$bodySize") {
-                    throw new UnknownResponseErrorException($data);
+                /** @var ResumableUploadInfo $data Psalm не сужает условный тип в ветке false. */
+                $pos = $this->lastFragmentOffset + $fragmentLength - 1;
+                if ($data->totalBytes !== $contentSize || $data->lastLoadedByte < $pos) {
+                    throw new UnexpectedUploadRangeException($data, $pos, $contentSize);
                 }
             }
 
-            $fragmentOffset += $fragmentLength;
-        }
+            $this->lastFragmentOffset += $fragmentLength;
+        } while ($this->lastFragmentOffset < $contentSize);
 
-        /**
-         * @psalm-suppress PossiblyUndefinedVariable
-         * @var (T is true ? array : non-empty-string)
-         */
+        /** @var (T is true ? array : ResumableUploadInfo) $data Psalm теряет условный тип после проверки диапазона. */
         return $json ? $data : $token;
     }
 
     /**
-     * @template T
-     * @param Closure(?UploadEndpoint $meta): T $callback
-     * @return T
+     * @param non-empty-string $url
+     * @param non-negative-int $contentSize
      */
-    private function uploadWithAttempts(Closure $callback, ?UploadEndpoint $meta): mixed
+    private function refreshUploadState(string $url, int $contentSize): bool
     {
-        $attempts = $this->retryAttempts;
-        do {
-            try {
-                return $callback($meta);
-            } catch (GeneralException $e) {
-                if ($e->getCode() === GeneralException::OPERATION_TIMEOUTED) {
-                    if ($this->eventCallback !== null) {
-                        ($this->eventCallback)(UploadEventType::Timeout);
-                    }
+        $this->eventCallback?->__invoke(UploadEventType::FileInfoRequest);
 
-                    $meta = $this->lastMeta;
+        $uploadInfo = $this->uploadClient->getResumableUploadInfo($url);
 
-                    continue;
-                }
-                throw $e;
+        if ($uploadInfo instanceof ResumableUploadInfo) {
+            if ($uploadInfo->totalBytes !== $contentSize) {
+                return false;
             }
-        } while ($attempts-- > 0);
 
-        /** @psalm-suppress PossiblyUndefinedVariable */
-        throw $e;
+            $this->lastFragmentOffset = $uploadInfo->lastLoadedByte + 1;
+
+            return true;
+        }
+
+        if ($uploadInfo === ResumableUploadStatus::StartFromBeginning) {
+            $this->lastFragmentOffset = 0;
+        }
+
+        return $uploadInfo !== ResumableUploadStatus::UploadEndpointUnavailable;
+    }
+
+    /**
+     * @param non-negative-int $contentSize
+     * @psalm-assert !null $this->lastUploadEndpoint
+     */
+    private function resolveUploadEndpoint(UploadType $type, bool $endpointProvided, int $contentSize): void
+    {
+        $firstAttempt = $this->lastUploadAttempts === 1;
+
+        if ($firstAttempt || $this->forceStartFromBeginning || $this->lastUploadEndpoint === null) {
+            $this->lastFragmentOffset = 0;
+        }
+
+        $checkUploadInfo = $this->smartResume
+            && $this->lastUploadEndpoint !== null
+            && ($firstAttempt ? !$this->startFromBeginning : !$this->forceStartFromBeginning);
+
+        $this->startFromBeginning = true;
+        $this->forceStartFromBeginning = false;
+
+        if ($checkUploadInfo && !$this->refreshUploadState($this->lastUploadEndpoint->getUrl(), $contentSize)) {
+            if ($endpointProvided) {
+                throw new UploadEndpointException();
+            }
+
+            $this->lastUploadEndpoint = null;
+            $this->lastFragmentOffset = 0;
+        }
+
+        if (!$firstAttempt || $checkUploadInfo) {
+            $this->eventCallback?->__invoke(
+                $this->lastFragmentOffset > 0 ? UploadEventType::Resume : UploadEventType::Reset,
+            );
+        }
+
+        $this->lastUploadEndpoint ??= $this->getUploadEndpoint($type);
     }
 }
